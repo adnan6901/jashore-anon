@@ -1,16 +1,19 @@
 {
-  "name": "jashore-anon",
+  "name": "dollars-jashore-server",
   "version": "1.0.0",
-  "description": "Anonymous community site for Jashore",
+  "description": "Anonymous message board for Jashore",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
+  "engines": {
+    "node": ">=14"
+  },
   "dependencies": {
-  "express": "^4.18.2",
-  "mongoose": "^7.5.0",
-  "cors": "^2.8.5",
-  "socket.io": "^4.7.5"
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "mongoose": "^7.5.0",
+    "socket.io": "^4.7.2"
+  }
 }
-}
-
