@@ -1,12 +1,62 @@
 const backendURL = window.location.origin;
-const socket = io(backendURL); // Connect to server
+const socket = io(backendURL);
+
+const SHARED_PASSWORD = "secret123"; // Replace with your actual shared password
 
 document.addEventListener("DOMContentLoaded", () => {
+  const loginContainer = document.getElementById("login-container");
+  const chatContainer = document.getElementById("chat-container");
+  const loginForm = document.getElementById("login-form");
+  const loginUsernameInput = document.getElementById("login-username");
+  const loginPasswordInput = document.getElementById("login-password");
+  const loginError = document.getElementById("login-error");
+
   const form = document.getElementById("anon-form");
   const messageInput = document.getElementById("message");
   const messagesList = document.getElementById("messages");
+  const logoutBtn = document.getElementById("logout-btn");
 
-  loadMessages();
+  // Check if username saved in localStorage
+  let username = localStorage.getItem("anonUsername");
+
+  if (username) {
+    loginContainer.style.display = "none";
+    chatContainer.style.display = "block";
+    loadMessages();
+  } else {
+    loginContainer.style.display = "block";
+    chatContainer.style.display = "none";
+  }
+
+  loginForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const enteredUsername = loginUsernameInput.value.trim();
+    const enteredPassword = loginPasswordInput.value;
+
+    if (enteredPassword !== SHARED_PASSWORD) {
+      loginError.textContent = "Incorrect password.";
+      return;
+    }
+    if (!enteredUsername) {
+      loginError.textContent = "Please enter a username.";
+      return;
+    }
+
+    username = enteredUsername;
+    localStorage.setItem("anonUsername", username);
+
+    loginError.textContent = "";
+    loginContainer.style.display = "none";
+    chatContainer.style.display = "block";
+    loadMessages();
+  });
+
+  logoutBtn.addEventListener("click", () => {
+    localStorage.removeItem("anonUsername");
+    username = null;
+    loginContainer.style.display = "block";
+    chatContainer.style.display = "none";
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -18,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const response = await fetch(`${backendURL}/api/posts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message, username }),
       });
 
       const data = await response.json();
@@ -38,23 +88,30 @@ document.addEventListener("DOMContentLoaded", () => {
   async function loadMessages() {
     try {
       const response = await fetch(`${backendURL}/api/posts`);
+      if (!response.ok) throw new Error("Failed to fetch posts");
+
       const posts = await response.json();
 
       messagesList.innerHTML = "";
       posts.forEach((post) => {
         const li = document.createElement("li");
-        li.textContent = post.message;
+        li.textContent = post.username
+          ? `${post.username}: ${post.message}`
+          : post.message;
         messagesList.appendChild(li);
       });
     } catch (error) {
       messagesList.innerHTML = "<li>Failed to load messages.</li>";
+      console.error("Error loading messages:", error);
     }
   }
 
-  // Listen for new messages from other users in real-time
+  // Listen for new posts realtime
   socket.on("new-post", (data) => {
     const li = document.createElement("li");
-    li.textContent = data.message;
+    li.textContent = data.username
+      ? `${data.username}: ${data.message}`
+      : data.message;
     messagesList.prepend(li);
   });
 });
