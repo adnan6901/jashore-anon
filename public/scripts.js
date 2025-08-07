@@ -1,4 +1,4 @@
-const backendURL = window.location.origin; // Same origin (Render serves frontend and backend together)
+const backendURL = window.location.origin;
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("anon-form");
@@ -9,7 +9,12 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
 
     const message = messageInput.value.trim();
-    if (!message) return;
+    if (!message) {
+      alert("Please enter a message.");
+      return;
+    }
+
+    console.log("Posting message:", message);
 
     try {
       const response = await fetch(`${backendURL}/api/posts`, {
@@ -18,22 +23,29 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify({ message }),
       });
 
+      console.log("POST status:", response.status);
+      const data = await response.json();
+      console.log("POST response:", data);
+
       if (!response.ok) {
-        const errData = await response.json();
-        alert(errData.error || "Failed to post message.");
+        alert(data.error || "Failed to post message");
         return;
       }
 
       messageInput.value = "";
       loadMessages();
-    } catch (err) {
-      alert("Server error.");
+    } catch (error) {
+      console.error("Error posting message:", error);
+      alert("Error posting message, try again later.");
     }
   });
 
   async function loadMessages() {
     try {
       const response = await fetch(`${backendURL}/api/posts`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch messages");
+      }
       const posts = await response.json();
 
       messagesList.innerHTML = "";
@@ -42,7 +54,9 @@ document.addEventListener("DOMContentLoaded", () => {
         li.textContent = post.message;
         messagesList.appendChild(li);
       });
-    } catch (err) {
+      console.log(`Loaded ${posts.length} messages`);
+    } catch (error) {
+      console.error("Error loading messages:", error);
       messagesList.innerHTML = "<li>Failed to load messages.</li>";
     }
   }
