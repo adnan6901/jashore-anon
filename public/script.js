@@ -1,26 +1,18 @@
 const backendURL = window.location.origin;
+const socket = io(backendURL); // Connect to server
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("anon-form");
   const messageInput = document.getElementById("message");
   const messagesList = document.getElementById("messages");
 
-  // Log to confirm script loaded
-  console.log("script.js loaded");
-
-  // Load messages on page load
   loadMessages();
-
-  // 🟢 Auto-refresh messages every 5 seconds
-  setInterval(loadMessages, 5000);
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const message = messageInput.value.trim();
     if (!message) return;
-
-    console.log("Posting message:", message);
 
     try {
       const response = await fetch(`${backendURL}/api/posts`, {
@@ -37,7 +29,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       messageInput.value = "";
-      loadMessages(); // Reload immediately after post
     } catch (error) {
       alert("Server error. Try again later.");
       console.error("Error posting message:", error);
@@ -47,9 +38,6 @@ document.addEventListener("DOMContentLoaded", () => {
   async function loadMessages() {
     try {
       const response = await fetch(`${backendURL}/api/posts`);
-
-      if (!response.ok) throw new Error("Failed to fetch posts");
-
       const posts = await response.json();
 
       messagesList.innerHTML = "";
@@ -60,7 +48,13 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     } catch (error) {
       messagesList.innerHTML = "<li>Failed to load messages.</li>";
-      console.error("Error loading messages:", error);
     }
   }
+
+  // Listen for new messages from other users in real-time
+  socket.on("new-post", (data) => {
+    const li = document.createElement("li");
+    li.textContent = data.message;
+    messagesList.prepend(li);
+  });
 });
