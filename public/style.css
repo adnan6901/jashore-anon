@@ -1,22 +1,68 @@
 body {
-  background: #121212;
+  background-color: #121212;
   color: #eee;
-  font-family: monospace;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   margin: 0;
-  padding: 1em;
+  padding: 0;
 }
 
-header {
-  text-align: center;
-  margin-bottom: 2em;
-}
-
-input, textarea, button {
-  display: block;
-  width: 100%;
-  margin: 0.5em 0;
+.container {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 20px;
   background: #1e1e1e;
-  color: white;
-  border: 1px solid #444;
-  padding: 0.5em;
+  border-radius: 8px;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+input[type="text"] {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  background: #333;
+  color: #eee;
+  font-size: 1rem;
+}
+
+button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  background: #00aaff;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background: #0088cc;
+}
+
+ul#messages {
+  list-style-type: none;
+  padding: 0;
+  max-height: 400px;
+  overflow-y: auto;
+  border-top: 1px solid #333;
+}
+
+ul#messages li {
+  padding: 10px;
+  border-bottom: 1px solid #333;
+  background: #222;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  word-wrap: break-word;
 }
