@@ -1,53 +1,63 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const dotenv = require("dotenv");
+const backendURL = window.location.origin;
 
-dotenv.config();
-const app = express();
-const PORT = process.env.PORT || 10000;
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("anon-form");
+  const messageInput = document.getElementById("message");
+  const messagesList = document.getElementById("messages");
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.static("public")); // 👉 Add this to serve static files
+  // Log to confirm script loaded
+  console.log("script.js loaded");
 
-// MongoDB connection
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
+  // Load messages on page load
+  loadMessages();
 
-// Schema
-const Post = mongoose.model("Post", new mongoose.Schema({
-  message: String,
-  timestamp: { type: Date, default: Date.now },
-}));
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-// Routes
-app.post("/api/posts", async (req, res) => {
-  try {
-    const post = new Post({ message: req.body.message });
-    await post.save();
-    res.status(201).json(post);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to save post" });
+    const message = messageInput.value.trim();
+    if (!message) return;
+
+    console.log("Posting message:", message);
+
+    try {
+      const response = await fetch(`${backendURL}/api/posts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || "Failed to post message.");
+        return;
+      }
+
+      messageInput.value = "";
+      loadMessages();
+    } catch (error) {
+      alert("Server error. Try again later.");
+      console.error("Error posting message:", error);
+    }
+  });
+
+  async function loadMessages() {
+    try {
+      const response = await fetch(`${backendURL}/api/posts`);
+
+      if (!response.ok) throw new Error("Failed to fetch posts");
+
+      const posts = await response.json();
+
+      messagesList.innerHTML = "";
+      posts.forEach((post) => {
+        const li = document.createElement("li");
+        li.textContent = post.message;
+        messagesList.appendChild(li);
+      });
+    } catch (error) {
+      messagesList.innerHTML = "<li>Failed to load messages.</li>";
+      console.error("Error loading messages:", error);
+    }
   }
-});
-
-app.get("/api/posts", async (req, res) => {
-  try {
-    const posts = await Post.find().sort({ timestamp: -1 });
-    res.json(posts);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to load posts" });
-  }
-});
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
 });
