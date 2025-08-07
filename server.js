@@ -1,62 +1,59 @@
-const express = require("express");
-const path = require("path");
-const mongoose = require("mongoose");
-const cors = require("cors");
-require("dotenv").config();
+const backendURL = window.location.origin; // Using same origin
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("anon-form");
+  const messageInput = document.getElementById("message");
+  const messagesList = document.getElementById("messages");
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log("✅ MongoDB connected"))
-.catch((err) => console.error("❌ MongoDB connection error:", err));
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-// Message Schema & Model
-const messageSchema = new mongoose.Schema({
-  message: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now },
-});
-const Message = mongoose.model("Message", messageSchema);
+    const message = messageInput.value.trim();
+    if (!message) return;
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, "public"))); // Serve frontend
+    console.log("Submitting message:", message);
 
-// Routes
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
+    try {
+      const response = await fetch(`${backendURL}/api/posts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
 
-// Get all posts
-app.get("/api/posts", async (req, res) => {
-  try {
-    const posts = await Message.find().sort({ createdAt: -1 }).limit(50);
-    res.json(posts);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch posts" });
+      console.log("Response status:", response.status);
+
+      const data = await response.json();
+      console.log("Response data:", data);
+
+      if (!response.ok) {
+        alert(data.error || "Failed to post message.");
+        return;
+      }
+
+      messageInput.value = "";
+      loadMessages();
+    } catch (err) {
+      console.error("Error submitting message:", err);
+      alert("Server error while submitting.");
+    }
+  });
+
+  async function loadMessages() {
+    try {
+      const response = await fetch(`${backendURL}/api/posts`);
+      const posts = await response.json();
+
+      messagesList.innerHTML = "";
+      posts.forEach((post) => {
+        const li = document.createElement("li");
+        li.textContent = post.message;
+        messagesList.appendChild(li);
+      });
+    } catch (err) {
+      console.error("Error loading messages:", err);
+      messagesList.innerHTML = "<li>Failed to load messages.</li>";
+    }
   }
-});
 
-// Add new post
-app.post("/api/posts", async (req, res) => {
-  const { message } = req.body;
-  if (!message) return res.status(400).json({ error: "Message is required" });
-
-  try {
-    const newMessage = new Message({ message });
-    await newMessage.save();
-    res.status(201).json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to save message" });
-  }
-});
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  loadMessages();
 });
