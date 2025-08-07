@@ -1,9 +1,10 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.querySelector("#anon-form");
-  const messageInput = document.querySelector("#message");
-  const messagesList = document.querySelector("#messages");
+const backendURL = window.location.origin; // Same origin (Render serves frontend and backend together)
 
-  // Submit post
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("anon-form");
+  const messageInput = document.getElementById("message");
+  const messagesList = document.getElementById("messages");
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -11,38 +12,38 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!message) return;
 
     try {
-      const res = await fetch("/api/posts", {
+      const response = await fetch(`${backendURL}/api/posts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message }),
       });
 
-      const result = await res.json();
-      if (res.ok) {
-        messageInput.value = "";
-        loadMessages();
-      } else {
-        alert(result.error || "Error submitting message.");
+      if (!response.ok) {
+        const errData = await response.json();
+        alert(errData.error || "Failed to post message.");
+        return;
       }
+
+      messageInput.value = "";
+      loadMessages();
     } catch (err) {
       alert("Server error.");
     }
   });
 
-  // Load posts
   async function loadMessages() {
     try {
-      const res = await fetch("/api/posts");
-      const data = await res.json();
+      const response = await fetch(`${backendURL}/api/posts`);
+      const posts = await response.json();
 
       messagesList.innerHTML = "";
-      data.forEach((post) => {
+      posts.forEach((post) => {
         const li = document.createElement("li");
         li.textContent = post.message;
         messagesList.appendChild(li);
       });
     } catch (err) {
-      messagesList.innerHTML = "<li>Error loading posts.</li>";
+      messagesList.innerHTML = "<li>Failed to load messages.</li>";
     }
   }
 
