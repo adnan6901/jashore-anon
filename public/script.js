@@ -11,6 +11,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // Load messages on page load
   loadMessages();
 
+  // 🟢 Auto-refresh messages every 5 seconds
+  setInterval(loadMessages, 5000);
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -34,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       messageInput.value = "";
-      loadMessages();
+      loadMessages(); // Reload immediately after post
     } catch (error) {
       alert("Server error. Try again later.");
       console.error("Error posting message:", error);
