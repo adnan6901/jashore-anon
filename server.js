@@ -71,6 +71,28 @@ app.post("/api/posts", async (req, res) => {
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
+// system messages (login/logout notices) 
+io.on('connection', (socket) => {
+    console.log('A user connected');
+
+    // When user logs in
+    socket.on('login', (username) => {
+        socket.username = username;
+        io.emit('system', `${username} joined the chat`);
+    });
+
+    // When user sends a chat message
+    socket.on('chat message', (msg) => {
+        io.emit('chat message', { username: socket.username, text: msg });
+    });
+
+    // When user disconnects
+    socket.on('disconnect', () => {
+        if (socket.username) {
+            io.emit('system', `${socket.username} left the chat`);
+        }
+    });
+});
 
 // Socket.IO connection logs
 io.on("connection", (socket) => {
@@ -84,3 +106,4 @@ io.on("connection", (socket) => {
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+
