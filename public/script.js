@@ -1,7 +1,7 @@
 const backendURL = window.location.origin;
 const socket = io(backendURL);
 
-const SHARED_PASSWORD = "secret123"; // Replace with your actual shared password
+const SHARED_PASSWORD = "secret123"; // Replace with your password
 
 document.addEventListener("DOMContentLoaded", () => {
   const loginContainer = document.getElementById("login-container");
@@ -96,43 +96,37 @@ document.addEventListener("DOMContentLoaded", () => {
       const posts = await response.json();
 
       messagesList.innerHTML = "";
-      posts.forEach((post) => {
+      posts.reverse().forEach((post) => {
         const li = document.createElement("li");
-        li.textContent = post.username
-          ? `${post.username}: ${post.message}`
-          : post.message;
+        if (post.type === "system") {
+          li.textContent = post.message;
+          li.classList.add("system-message");
+        } else {
+          li.textContent = `${post.username}: ${post.message}`;
+        }
         messagesList.appendChild(li);
       });
+      messagesList.scrollTop = messagesList.scrollHeight;
     } catch (error) {
       messagesList.innerHTML = "<li>Failed to load messages.</li>";
       console.error("Error loading messages:", error);
     }
   }
 
-  // Listen for new chat messages in real-time
+  // Real-time new chat post
   socket.on("new-post", (data) => {
     const li = document.createElement("li");
-    li.textContent = data.username
-      ? `${data.username}: ${data.message}`
-      : data.message;
-    messagesList.prepend(li);
+    li.textContent = `${data.username}: ${data.message}`;
+    messagesList.appendChild(li);
+    messagesList.scrollTop = messagesList.scrollHeight;
   });
 
-  // Listen for login/logout notifications
-  socket.on("user-login", (user) => {
-    addSystemMessage(`${user} logged in`);
-  });
-
-  socket.on("user-logout", (user) => {
-    addSystemMessage(`${user} logged out`);
-  });
-
-  function addSystemMessage(text) {
+  // Real-time system messages
+  socket.on("system-message", (data) => {
     const li = document.createElement("li");
-    li.textContent = text;
-    li.style.fontStyle = "italic";
-    li.style.color = "gray";
-    li.style.textAlign = "center";
-    messagesList.prepend(li);
-  }
+    li.textContent = data.message;
+    li.classList.add("system-message");
+    messagesList.appendChild(li);
+    messagesList.scrollTop = messagesList.scrollHeight;
+  });
 });
