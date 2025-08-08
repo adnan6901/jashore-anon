@@ -16,12 +16,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const messagesList = document.getElementById("messages");
   const logoutBtn = document.getElementById("logout-btn");
 
-  // Check if username saved in localStorage
   let username = localStorage.getItem("anonUsername");
 
   if (username) {
     loginContainer.style.display = "none";
     chatContainer.style.display = "block";
+    socket.emit("user-login", username);
     loadMessages();
   } else {
     loginContainer.style.display = "block";
@@ -48,10 +48,13 @@ document.addEventListener("DOMContentLoaded", () => {
     loginError.textContent = "";
     loginContainer.style.display = "none";
     chatContainer.style.display = "block";
+
+    socket.emit("user-login", username);
     loadMessages();
   });
 
   logoutBtn.addEventListener("click", () => {
+    socket.emit("user-logout", username);
     localStorage.removeItem("anonUsername");
     username = null;
     loginContainer.style.display = "block";
@@ -106,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Listen for new posts realtime
+  // Listen for new chat messages in real-time
   socket.on("new-post", (data) => {
     const li = document.createElement("li");
     li.textContent = data.username
@@ -114,4 +117,22 @@ document.addEventListener("DOMContentLoaded", () => {
       : data.message;
     messagesList.prepend(li);
   });
+
+  // Listen for login/logout notifications
+  socket.on("user-login", (user) => {
+    addSystemMessage(`${user} logged in`);
+  });
+
+  socket.on("user-logout", (user) => {
+    addSystemMessage(`${user} logged out`);
+  });
+
+  function addSystemMessage(text) {
+    const li = document.createElement("li");
+    li.textContent = text;
+    li.style.fontStyle = "italic";
+    li.style.color = "gray";
+    li.style.textAlign = "center";
+    messagesList.prepend(li);
+  }
 });
