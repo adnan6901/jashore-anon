@@ -74,3 +74,11 @@ button:hover {
   word-break: break-word;
   font-size: 15px;
 }
+.system-message {
+    text-align: center;
+    color: #888;
+    font-style: italic;
+    margin: 10px 0;
+    font-size: 0.9rem;
+}
+
