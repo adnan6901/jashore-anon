@@ -18,6 +18,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let username = localStorage.getItem("anonUsername");
 
+  // Format date as DD/MM/YYYY HH:MM
+function formatDateTime(dateString) {
+  const date = new Date(dateString);
+
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const year = date.getFullYear();
+
+  let hours = date.getHours();
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12; // convert hour '0' to '12'
+
+  return `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
+}
   if (username) {
     loginContainer.style.display = "none";
     chatContainer.style.display = "block";
@@ -99,10 +115,10 @@ document.addEventListener("DOMContentLoaded", () => {
       posts.reverse().forEach((post) => {
         const li = document.createElement("li");
         if (post.type === "system") {
-          li.textContent = post.message;
+          li.textContent = `${post.message} (${formatDateTime(post.createdAt)})`;
           li.classList.add("system-message");
         } else {
-          li.textContent = `${post.username}: ${post.message}`;
+          li.textContent = `${post.username}: ${post.message} (${formatDateTime(post.createdAt)})`;
         }
         messagesList.appendChild(li);
       });
@@ -116,7 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Real-time new chat post
   socket.on("new-post", (data) => {
     const li = document.createElement("li");
-    li.textContent = `${data.username}: ${data.message}`;
+    li.textContent = `${data.username}: ${data.message} (${formatDateTime(data.createdAt)})`;
     messagesList.appendChild(li);
     messagesList.scrollTop = messagesList.scrollHeight;
   });
@@ -124,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Real-time system messages
   socket.on("system-message", (data) => {
     const li = document.createElement("li");
-    li.textContent = data.message;
+    li.textContent = `${data.message} (${formatDateTime(data.createdAt)})`;
     li.classList.add("system-message");
     messagesList.appendChild(li);
     messagesList.scrollTop = messagesList.scrollHeight;
